@@ -44,7 +44,20 @@ Reactive props are **readonly by default**. Only props declared with `Aero.binda
 </div>
 ```
 
-`Aero.bindable()` marks `count` as writable from the child. `Aero.bindable(0)` adds a default when the parent does not pass `bind:count`.
+`Aero.bindable()` marks `count` as writable from the child. Parents must pass bindable props with `bind:count` — one-way `count="{ count }"` is an error. `Aero.bindable(0)` makes the prop optional when the parent omits `bind:count`.
+
+## Required vs optional
+
+Destructuring defaults drive the contract:
+
+| Declaration | Required? | Bindable? |
+| --- | --- | --- |
+| `count` | yes | no (readonly) |
+| `label = 'Counter'` | no | no (readonly) |
+| `count = Aero.bindable(0)` | no | yes |
+| `count = Aero.bindable()` | yes | yes |
+
+Required bindable props must be passed with `bind:<name>`. `aero check` and the VS Code extension report missing or one-way bindings.
 
 ## Readonly reactive props
 
@@ -58,11 +71,7 @@ Props destructured from `Aero.props` without `bindable()` are readonly in the ch
 <p>{ label }</p>
 ```
 
-To allow the child to mutate a prop, use `Aero.bindable()` on the child and `bind:<name>` on the parent.
-
-## Required reactive props
-
-If a child declares a required reactive prop (no default), the parent must pass `bind:<name>`. `aero check` and the VS Code extension report missing bindings.
+Pass readonly reactive props with `label="{ label }"`. To allow the child to mutate a prop, use `Aero.bindable()` on the child and `bind:<name>` on the parent.
 
 ## Build-time props vs reactive props
 

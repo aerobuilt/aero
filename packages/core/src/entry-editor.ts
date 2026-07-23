@@ -27,6 +27,7 @@ export { COMPONENT_SUFFIX_REGEX } from '@aero-js/compiler/constants'
 export {
 	analyzeBuildScriptForEditor,
 	getPropsTypeFromBuildScript,
+	getRequiredPropsFromAeroPropsDestructure,
 	type BuildScriptImportForEditor,
 	type BuildScriptAnalysisForEditorResult,
 	type PropsTypeResult,

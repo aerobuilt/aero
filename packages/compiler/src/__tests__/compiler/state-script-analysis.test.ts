@@ -35,7 +35,7 @@ describe('analyzeStateScript', () => {
 
 	it('captures reactive props from Aero.props destructures', () => {
 		const result = analyzeStateScript(`
-			const { count, label = 'Counter', title: heading, value = Aero.bindable(0), optional = Aero.bindable() } = Aero.props as Props
+			const { count, label = 'Counter', title: heading, value = Aero.bindable(0), requiredBindable = Aero.bindable() } = Aero.props as Props
 		`)
 		const byName = new Map(result.bindings.map(b => [b.name, b]))
 
@@ -63,10 +63,10 @@ describe('analyzeStateScript', () => {
 			bindable: true,
 			initExpr: '0',
 		})
-		expect(byName.get('optional')).toMatchObject({
+		expect(byName.get('requiredBindable')).toMatchObject({
 			reactiveProp: true,
-			propName: 'optional',
-			required: false,
+			propName: 'requiredBindable',
+			required: true,
 			bindable: true,
 			initExpr: 'undefined',
 		})

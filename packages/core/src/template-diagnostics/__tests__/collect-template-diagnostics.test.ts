@@ -1,5 +1,6 @@
 import { PARITY_SCENARIOS } from '../../../../diagnostics/src/__tests__/fixtures/parity/index.js'
 import fs from 'node:fs'
+import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
@@ -174,6 +175,177 @@ import card from '@components/card.html'
 				d.message.includes('card-component')
 		)
 		expect(missing).toBeDefined()
+	})
+
+	it('infers required props from untyped Aero.props destructuring defaults', () => {
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-destructure-props-'))
+		try {
+			const compPath = path.join(dir, 'note.html')
+			const pagePath = path.join(dir, 'page.html')
+			fs.writeFileSync(
+				compPath,
+				`<script is:build>
+const { title, body = 'No body provided.' } = Aero.props
+</script>
+<p>{ title }: { body }</p>
+`,
+				'utf-8'
+			)
+			const text = `<script is:build>
+import note from './note.html'
+</script>
+<note-component body="only body" />`
+			fs.writeFileSync(pagePath, text, 'utf-8')
+			const diagnostics = collectTemplateDiagnostics({
+				document: makeDocument(text, pagePath),
+				root: dir,
+				workspaceRoot: dir,
+			})
+
+			const missing = diagnostics.find(
+				d =>
+					d.message.includes("Missing required prop 'title'") &&
+					d.message.includes('note-component')
+			)
+			expect(missing).toBeDefined()
+			expect(
+				diagnostics.some(d => d.message.includes("Missing required prop 'body'"))
+			).toBe(false)
+		} finally {
+			fs.rmSync(dir, { recursive: true, force: true })
+		}
+	})
+
+	it('flags bind: when the expression is a build-only variable', () => {
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-bind-build-var-'))
+		try {
+			const compPath = path.join(dir, 'my.html')
+			const pagePath = path.join(dir, 'page.html')
+			fs.writeFileSync(
+				compPath,
+				`<script is:state>
+const { count = Aero.bindable(0) } = Aero.props
+</script>
+<span>{ count }</span>
+`,
+				'utf-8'
+			)
+			const text = `<script is:build>
+import my from './my.html'
+let count = 0
+</script>
+<my-component bind:count="{ count }" />`
+			fs.writeFileSync(pagePath, text, 'utf-8')
+			const diagnostics = collectTemplateDiagnostics({
+				document: makeDocument(text, pagePath),
+				root: dir,
+				workspaceRoot: dir,
+			})
+			const flagged = diagnostics.find(d =>
+				d.message.includes('requires a writable state binding in `<script is:state>`')
+			)
+			expect(flagged).toBeDefined()
+		} finally {
+			fs.rmSync(dir, { recursive: true, force: true })
+		}
+	})
+
+	it('flags bind: when the child uses an undestructured Aero.props bag', () => {
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-bind-props-bag-'))
+		try {
+			const compPath = path.join(dir, 'my.html')
+			const pagePath = path.join(dir, 'page.html')
+			fs.writeFileSync(
+				compPath,
+				`<script is:state>
+const props = Aero.props
+</script>
+<span>{ props.count }</span>
+`,
+				'utf-8'
+			)
+			const text = `<script is:build>
+import my from './my.html'
+</script>
+<script is:state>
+let count = 0
+</script>
+<my-component bind:count="{ count }" />`
+			fs.writeFileSync(pagePath, text, 'utf-8')
+			const diagnostics = collectTemplateDiagnostics({
+				document: makeDocument(text, pagePath),
+				root: dir,
+				workspaceRoot: dir,
+			})
+			const flagged = diagnostics.find(d =>
+				d.message.includes('must be declared with `Aero.bindable()`')
+			)
+			expect(flagged).toBeDefined()
+		} finally {
+			fs.rmSync(dir, { recursive: true, force: true })
+		}
+	})
+
+	it('clears bind: bindable errors when readTextFile overlays an unsaved child fix', () => {
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-bind-overlay-'))
+		try {
+			const compPath = path.join(dir, 'my.html')
+			const pagePath = path.join(dir, 'page.html')
+			fs.writeFileSync(
+				compPath,
+				`<script is:state>
+const { count } = Aero.props
+</script>
+<span>{ count }</span>
+`,
+				'utf-8'
+			)
+			const text = `<script is:build>
+import my from './my.html'
+</script>
+<script is:state>
+let count = 0
+</script>
+<my-component bind:count="{ count }" />`
+			fs.writeFileSync(pagePath, text, 'utf-8')
+			const overlays = new Map<string, string>([
+				[
+					compPath,
+					`<script is:state>
+const { count = Aero.bindable() } = Aero.props
+</script>
+<span>{ count }</span>
+`,
+				],
+			])
+			try {
+				overlays.set(
+					fs.realpathSync(compPath),
+					overlays.get(compPath)!
+				)
+			} catch {
+				/* ignore */
+			}
+			const diagnostics = collectTemplateDiagnostics({
+				document: makeDocument(text, pagePath),
+				root: dir,
+				workspaceRoot: dir,
+				readTextFile: absolutePath => {
+					const hit = overlays.get(absolutePath)
+					if (hit !== undefined) return hit
+					try {
+						return overlays.get(fs.realpathSync(absolutePath))
+					} catch {
+						return undefined
+					}
+				},
+			})
+			expect(
+				diagnostics.some(d => d.message.includes('must be declared with `Aero.bindable()`'))
+			).toBe(false)
+		} finally {
+			fs.rmSync(dir, { recursive: true, force: true })
+		}
 	})
 })
 

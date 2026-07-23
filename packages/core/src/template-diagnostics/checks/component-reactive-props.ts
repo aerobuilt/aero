@@ -8,7 +8,7 @@ import type { SourceDocument } from '../source-document'
 import type { VariableDefinition } from '../analyzer'
 import * as fs from 'node:fs'
 import path from 'node:path'
-import { analyzeStateScript, collectComponentReactivePropMetadata } from '@aero-js/compiler'
+import { collectComponentReactivePropMetadata } from '@aero-js/compiler'
 import {
 	attributeSectionBase,
 	findAttributeRange,
@@ -54,16 +54,6 @@ function collectStateScriptContent(componentContent: string): string {
 		if (/\bis:state\b/.test(match[1])) scripts.push(match[2])
 	}
 	return scripts.join('\n')
-}
-
-function collectWrittenReactivePropNames(componentContent: string): Set<string> {
-	const stateScript = collectStateScriptContent(componentContent)
-	if (!stateScript.trim()) return new Set()
-	const written = new Set<string>()
-	for (const binding of analyzeStateScript(stateScript).bindings) {
-		if (binding.reactiveProp && binding.writes) written.add(binding.name)
-	}
-	return written
 }
 
 function collectBindableReactivePropNames(componentContent: string): Set<string> {
@@ -112,6 +102,48 @@ function pushReactivePropDiagnostic(
 	pushOffsetDiagnostic(diagnostics, document, range.start, range.end, message, 'AERO_COMPILE', 'error')
 }
 
+/**
+ * Parent-side: every `bind:name="{ expr }"` must reference a writable `<script is:state>` binding.
+ * Matches compile lowerer checks so build-only variables are flagged in the IDE.
+ */
+export function validateComponentBindRequiresState(
+	document: SourceDocument,
+	diagnostics: AeroDiagnostic[],
+	tagStart: number,
+	fullTag: string,
+	tagName: string,
+	stateVars: Map<string, VariableDefinition>
+): void {
+	const rawAttrs = sliceRawAttrs(tagName, fullTag)
+	const attrBase = attributeSectionBase(tagStart, tagName)
+	const attrRegex =
+		/(?:^|\s)([A-Za-z_:][A-Za-z0-9_:-]*)\s*=\s*(?:"([^"]*)"|'([^']*)')/g
+	let m: RegExpExecArray | null
+	attrRegex.lastIndex = 0
+	while ((m = attrRegex.exec(rawAttrs)) !== null) {
+		const rawName = m[1]
+		if (!rawName.startsWith('bind:')) continue
+		const value = (m[2] ?? m[3] ?? '').trim()
+		const expr = value.match(/^\{\s*([A-Za-z_$][\w$]*)\s*\}$/)?.[1]
+		const inState = expr ? stateVars.has(expr) : false
+		if (inState) continue
+		const message =
+			stateVars.size === 0
+				? `Component bind prop \`${rawName}\` on <${tagName}> requires a writable state binding in \`<script is:state>\`.`
+				: `Component bind prop \`${rawName}\` must reference one writable state binding.`
+		pushReactivePropDiagnostic(
+			document,
+			diagnostics,
+			tagStart,
+			tagName,
+			rawAttrs,
+			attrBase,
+			rawName,
+			message
+		)
+	}
+}
+
 export function validateComponentReactiveProps(
 	document: SourceDocument,
 	diagnostics: AeroDiagnostic[],
@@ -121,7 +153,8 @@ export function validateComponentReactiveProps(
 	baseName: string,
 	importName: string,
 	resolvedPath: string,
-	stateVars: Map<string, VariableDefinition>
+	stateVars: Map<string, VariableDefinition>,
+	readTextFile?: (absolutePath: string) => string | undefined
 ): void {
 	if (stateVars.size === 0) return
 	let metadata: ReturnType<typeof collectComponentReactivePropMetadata>
@@ -131,19 +164,50 @@ export function validateComponentReactiveProps(
 		return
 	}
 	const reactiveProps = metadata[importName] ?? metadata[baseName] ?? []
-	if (reactiveProps.length === 0) return
-
 	const rawAttrs = sliceRawAttrs(tagName, fullTag)
 	const attrBase = attributeSectionBase(tagStart, tagName)
 	const passed = getPassedReactivePropNames(rawAttrs, stateVars)
-	const componentContent = fs.readFileSync(resolvedPath, 'utf-8')
-	const writtenReactiveProps = collectWrittenReactivePropNames(componentContent)
+	const componentContent =
+		readTextFile?.(resolvedPath) ??
+		(() => {
+			try {
+				return readTextFile?.(fs.realpathSync(resolvedPath))
+			} catch {
+				return undefined
+			}
+		})() ??
+		fs.readFileSync(resolvedPath, 'utf-8')
 	const bindableReactiveProps = collectBindableReactivePropNames(componentContent)
+	const bindablePropNames = new Set<string>(bindableReactiveProps)
+	for (const reactiveProp of reactiveProps) {
+		const metadataBindable =
+			(reactiveProp as typeof reactiveProp & { bindable?: boolean }).bindable === true
+		if (!metadataBindable) continue
+		bindablePropNames.add(reactiveProp.propName || reactiveProp.name)
+		bindablePropNames.add(reactiveProp.name)
+	}
+
+	for (const [propName, passedProp] of passed) {
+		if (!passedProp.bound) continue
+		if (bindablePropNames.has(propName)) continue
+		pushReactivePropDiagnostic(
+			document,
+			diagnostics,
+			tagStart,
+			tagName,
+			rawAttrs,
+			attrBase,
+			passedProp.rawAttrName,
+			`Child prop \`${propName}\` for <${tagName}> must be declared with \`Aero.bindable()\` before it can be passed with \`bind:${propName}\`.`
+		)
+	}
+
 	for (const reactiveProp of reactiveProps) {
 		const propName = reactiveProp.propName || reactiveProp.name
 		const passedProp = passed.get(propName)
-		const metadataWrites = (reactiveProp as typeof reactiveProp & { writes?: boolean }).writes === true
-		const metadataBindable = (reactiveProp as typeof reactiveProp & { bindable?: boolean }).bindable === true
+		const metadataBindable =
+			(reactiveProp as typeof reactiveProp & { bindable?: boolean }).bindable === true
+		const isBindable = metadataBindable || bindableReactiveProps.has(reactiveProp.name)
 		if (passedProp?.obsoleteReadonly === true) {
 			pushReactivePropDiagnostic(
 				document,
@@ -157,7 +221,7 @@ export function validateComponentReactiveProps(
 			)
 			continue
 		}
-		if (passedProp?.bound === true && !metadataBindable && !bindableReactiveProps.has(reactiveProp.name)) {
+		if (isBindable && passedProp && !passedProp.bound) {
 			pushReactivePropDiagnostic(
 				document,
 				diagnostics,
@@ -166,20 +230,7 @@ export function validateComponentReactiveProps(
 				rawAttrs,
 				attrBase,
 				passedProp.rawAttrName,
-				`Child prop \`${propName}\` for <${tagName}> must be declared with \`Aero.bindable()\` before it can be passed with \`bind:${propName}\`.`
-			)
-			continue
-		}
-		if ((metadataWrites || writtenReactiveProps.has(reactiveProp.name)) && passedProp && !passedProp.bound) {
-			pushReactivePropDiagnostic(
-				document,
-				diagnostics,
-				tagStart,
-				tagName,
-				rawAttrs,
-				attrBase,
-				passedProp.rawAttrName,
-				`Reactive prop \`${propName}\` for <${tagName}> is readonly; use \`bind:${propName}="{ ... }"\` to allow child mutation.`
+				`Bindable prop \`${propName}\` for <${tagName}> must be passed with \`bind:${propName}="{ ... }"\`.`
 			)
 			continue
 		}
@@ -193,7 +244,9 @@ export function validateComponentReactiveProps(
 			rawAttrs,
 			attrBase,
 			null,
-			`Required reactive prop \`${propName}\` for <${tagName}> must be passed as a state signal.`
+			isBindable
+				? `Required bindable prop \`${propName}\` for <${tagName}> must be passed with \`bind:${propName}="{ ... }"\`.`
+				: `Required reactive prop \`${propName}\` for <${tagName}> must be passed as a state signal.`
 		)
 	}
 }

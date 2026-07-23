@@ -840,7 +840,9 @@ export class Lowerer {
 			const propName = prop.propName || prop.name
 			if (!prop.required || reactivePropExprs[propName] !== undefined) continue
 			throw new CompileError({
-				message: `Required reactive prop \`${propName}\` for <${tagName}> must be passed as a state signal.`,
+				message: prop.bindable
+					? `Required bindable prop \`${propName}\` for <${tagName}> must be passed with \`bind:${propName}="{ ... }"\`.`
+					: `Required reactive prop \`${propName}\` for <${tagName}> must be passed as a state signal.`,
 				file: this.diag?.file,
 			})
 		}
@@ -853,18 +855,28 @@ export class Lowerer {
 		reactivePropExprs: Record<string, IRComponentReactivePropExpr>
 	): void {
 		if (!this.reactiveState) return
-		for (const prop of this.getComponentReactivePropMetadata(tagName, kebabBase, baseName)) {
+		const metadata = this.getComponentReactivePropMetadata(tagName, kebabBase, baseName)
+		const bindablePropNames = new Set<string>()
+		for (const prop of metadata) {
+			if (!prop.bindable) continue
+			bindablePropNames.add(prop.propName || prop.name)
+			bindablePropNames.add(prop.name)
+		}
+		for (const [propName, passed] of Object.entries(reactivePropExprs)) {
+			if (passed.mutable !== true) continue
+			if (bindablePropNames.has(propName)) continue
+			throw new CompileError({
+				message: `Child prop \`${propName}\` for <${tagName}> must be declared with \`Aero.bindable()\` before it can be passed with \`bind:${propName}\`.`,
+				file: this.diag?.file,
+			})
+		}
+		for (const prop of metadata) {
+			if (!prop.bindable) continue
 			const propName = prop.propName || prop.name
 			const passed = reactivePropExprs[propName]
-			if (passed?.mutable === true && !prop.bindable) {
+			if (passed?.mutable === false) {
 				throw new CompileError({
-					message: `Child prop \`${propName}\` for <${tagName}> must be declared with \`Aero.bindable()\` before it can be passed with \`bind:${propName}\`.`,
-					file: this.diag?.file,
-				})
-			}
-			if (prop.writes && passed?.mutable === false) {
-				throw new CompileError({
-					message: `Reactive prop \`${propName}\` for <${tagName}> is readonly; use \`bind:${propName}="{ ... }"\` to allow child mutation.`,
+					message: `Bindable prop \`${propName}\` for <${tagName}> must be passed with \`bind:${propName}="{ ... }"\`.`,
 					file: this.diag?.file,
 				})
 			}

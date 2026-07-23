@@ -135,7 +135,12 @@ describe('state reactive codegen (PR-2d)', () => {
 		</script>
 		<counter-component bind:count="{ count }" />`
 
-		const code = compile(parse(html), mockOptions)
+		const code = compile(parse(html), {
+			...mockOptions,
+			componentReactiveProps: {
+				counter: [{ name: 'count', propName: 'count', required: false, bindable: true }],
+			},
+		})
 
 		expect(code).toContain('reactivePropExprs: {"count":{"expr":"count","mutable":true}}')
 		expect(code).toContain('renderComponent(counter, { "count": count }')
@@ -261,6 +266,41 @@ describe('state reactive codegen (PR-2d)', () => {
 		)
 	})
 
+	it('rejects bind component props when the child has no reactive prop metadata', () => {
+		const html = `<script is:build>
+			const counter = { name: 'counter' }
+		</script>
+		<script is:state>
+			let count = 1
+		</script>
+		<counter-component bind:count="{ count }" />`
+
+		expect(() => compile(parse(html), mockOptions)).toThrow(
+			'Child prop `count` for <counter-component> must be declared with `Aero.bindable()` before it can be passed with `bind:count`.'
+		)
+	})
+
+	it('rejects bind component props when the bind name is not a known bindable child prop', () => {
+		const html = `<script is:build>
+			const counter = { name: 'counter' }
+		</script>
+		<script is:state>
+			let count = 1
+		</script>
+		<counter-component bind:count="{ count }" />`
+
+		expect(() =>
+			compile(parse(html), {
+				...mockOptions,
+				componentReactiveProps: {
+					counter: [{ name: 'value', propName: 'value', required: false, bindable: true }],
+				},
+			})
+		).toThrow(
+			'Child prop `count` for <counter-component> must be declared with `Aero.bindable()` before it can be passed with `bind:count`.'
+		)
+	})
+
 	it('allows bind component props when the child prop is bindable', () => {
 		const html = `<script is:build>
 			const counter = { name: 'counter' }
@@ -280,7 +320,7 @@ describe('state reactive codegen (PR-2d)', () => {
 		).not.toThrow()
 	})
 
-	it('rejects plain reactive props when the child writes them', () => {
+	it('rejects plain reactive props when the child declares them bindable', () => {
 		const html = `<script is:build>
 			const counter = { name: 'counter' }
 		</script>
@@ -293,11 +333,32 @@ describe('state reactive codegen (PR-2d)', () => {
 			compile(parse(html), {
 				...mockOptions,
 				componentReactiveProps: {
-					counter: [{ name: 'count', propName: 'count', required: false, bindable: true, writes: true }],
+					counter: [{ name: 'count', propName: 'count', required: false, bindable: true }],
 				},
 			})
 		).toThrow(
-			'Reactive prop `count` for <counter-component> is readonly; use `bind:count="{ ... }"` to allow child mutation.'
+			'Bindable prop `count` for <counter-component> must be passed with `bind:count="{ ... }"`.'
+		)
+	})
+
+	it('rejects omitted required bindable props with bind: messaging', () => {
+		const html = `<script is:build>
+			const counter = { name: 'counter' }
+		</script>
+		<script is:state>
+			let count = 1
+		</script>
+		<counter-component label="Static" />`
+
+		expect(() =>
+			compile(parse(html), {
+				...mockOptions,
+				componentReactiveProps: {
+					counter: [{ name: 'count', propName: 'count', required: true, bindable: true }],
+				},
+			})
+		).toThrow(
+			'Required bindable prop `count` for <counter-component> must be passed with `bind:count="{ ... }"`.'
 		)
 	})
 
