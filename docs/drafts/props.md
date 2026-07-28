@@ -38,13 +38,15 @@ You can also compose strings with inline expressions:
 
 If `Aero.page.params.slug === 'intro'`, `title` becomes `Slug: intro`.
 
-To render literal braces in composed strings, use double braces:
+To render literal braces in composed strings, use a string expression (or HTML entities):
 
 ```html
-<my-component title="{{ slug }} + { Aero.page.params.slug }" />
+<my-component title="{ '{ slug } + ' + Aero.page.params.slug }" />
 ```
 
 If `Aero.page.params.slug === 'intro'`, `title` becomes `{ slug } + intro`.
+
+Adjacent `{{` is nested JS (e.g. an object literal), not an escape: `props="{{ foo: 1 }}"`.
 
 ### 3. Spread Syntax
 

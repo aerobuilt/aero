@@ -4,10 +4,10 @@
  */
 import * as fs from 'node:fs'
 import {
+	analyzeBuildScriptForEditor,
 	getPropsTypeFromBuildScript,
 	getRequiredPropsFromAeroPropsDestructure,
-	analyzeBuildScriptForEditor,
-} from '../entry-editor'
+} from '@aero-js/compiler/build-script-analysis'
 import type { PathResolver } from './path-resolver'
 import { parseScriptBlocks } from './script-tag'
 

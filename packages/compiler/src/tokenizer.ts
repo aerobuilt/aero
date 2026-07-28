@@ -13,5 +13,4 @@ export {
 	type Segment,
 	type LiteralSegment,
 	type InterpolationSegment,
-	type TokenizeOptions,
 } from '@aero-js/interpolation'

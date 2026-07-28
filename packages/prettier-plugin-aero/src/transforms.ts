@@ -105,7 +105,7 @@ function formatBracedWrapper(inner: string, spaced: boolean): string {
 
 function isSingleBracedExpression(text: string): boolean {
 	const trimmed = text.trim()
-	const segments = tokenizeCurlyInterpolation(trimmed, { attributeMode: true })
+	const segments = tokenizeCurlyInterpolation(trimmed)
 	return (
 		segments.length === 1 &&
 		segments[0].kind === 'interpolation' &&
@@ -137,13 +137,18 @@ function stripSpuriousCommaOperatorParens(original: string, formatted: string): 
 
 async function formatExpressionContents(
 	expression: string,
-	options: prettier.Options
+	options: prettier.Options,
+	aeroSpaced?: boolean
 ): Promise<string> {
 	const trimmed = expression.trim()
+	const isBraceWrapped = /^\{[\s\S]*\}$/.test(trimmed)
 	const formatOptions: prettier.Options = {
 		...options,
 		parser: 'babel-ts',
 		semi: options.semi ?? false,
+		// Nested `{…}` (object literals) follow aeroBracketSpacing so
+		// `{{foo: 1}}` vs `{ { foo: 1 } }` stay consistent.
+		...(isBraceWrapped && aeroSpaced !== undefined ? { bracketSpacing: aeroSpaced } : {}),
 	}
 
 	const stripFormatted = (value: string): string =>
@@ -152,21 +157,46 @@ async function formatExpressionContents(
 			.replace(/^;\s*/, '')
 			.replace(/;\s*$/, '')
 
-	try {
-		const rawFormatted = stripFormatted(await prettier.format(trimmed, formatOptions))
-		return stripSpuriousCommaOperatorParens(trimmed, rawFormatted)
-	} catch {
+	const tryFormat = async (code: string): Promise<string | null> => {
 		try {
-			const wrapped = await prettier.format(`(${trimmed})`, formatOptions)
-			return stripFormatted(
-				wrapped
-					.trim()
-					.replace(/^\(/, '')
-					.replace(/\)\;?\s*$/, '')
-			)
+			return stripFormatted(await prettier.format(code, formatOptions))
 		} catch {
-			return trimmed
+			return null
 		}
+	}
+
+	const extractAssignmentRhs = (formatted: string): string =>
+		formatted.replace(/^x\s*=\s*/, '').replace(/;$/, '').trim()
+
+	// Brace-wrapped values: format as RHS so `{ foo: 1 }` is an object, not a labeled block.
+	if (isBraceWrapped) {
+		const assigned = await tryFormat(`x = ${trimmed}`)
+		if (assigned != null) {
+			return stripSpuriousCommaOperatorParens(trimmed, extractAssignmentRhs(assigned))
+		}
+	}
+
+	const direct = await tryFormat(trimmed)
+	if (direct != null) {
+		if (isBraceWrapped && direct.includes('\n')) {
+			const assigned = await tryFormat(`x = ${trimmed}`)
+			if (assigned != null) {
+				return stripSpuriousCommaOperatorParens(trimmed, extractAssignmentRhs(assigned))
+			}
+		}
+		return stripSpuriousCommaOperatorParens(trimmed, direct)
+	}
+
+	try {
+		const wrapped = await prettier.format(`(${trimmed})`, formatOptions)
+		return stripFormatted(
+			wrapped
+				.trim()
+				.replace(/^\(/, '')
+				.replace(/\)\;?\s*$/, '')
+		)
+	} catch {
+		return trimmed
 	}
 }
 
@@ -181,7 +211,9 @@ async function formatBracedRegion(
 	const raw = source.slice(start, end)
 	if (!isSingleBracedExpression(raw)) return null
 	const inner = raw.trim().slice(1, -1)
-	const formattedInner = formatInner ? await formatExpressionContents(inner, options) : inner.trim()
+	const formattedInner = formatInner
+		? await formatExpressionContents(inner, options, spaced)
+		: inner.trim()
 	const next = formatBracedWrapper(formattedInner, spaced)
 	if (next === raw) return null
 	return { start, end, text: next }
@@ -210,7 +242,7 @@ async function collectBracketSpacingEdits(
 					node.startTagEnd ?? undefined
 				)
 				if (valueStart == null) continue
-				const segments = tokenizeCurlyInterpolation(value, { attributeMode: true })
+				const segments = tokenizeCurlyInterpolation(value)
 				for (const seg of segments) {
 					if (seg.kind !== 'interpolation') continue
 					const edit = await formatBracedRegion(
@@ -234,7 +266,7 @@ async function collectBracketSpacingEdits(
 		// Skipping when `children` has tags left those braces unformatted.
 		if (innerStart != null && innerEnd != null && innerEnd > innerStart) {
 			const text = source.slice(innerStart, innerEnd)
-			const segments = tokenizeCurlyInterpolation(text, { attributeMode: false })
+			const segments = tokenizeCurlyInterpolation(text)
 			for (const seg of segments) {
 				if (seg.kind !== 'interpolation') continue
 				const edit = await formatBracedRegion(

@@ -60,13 +60,17 @@ Use `raw()` when you intentionally need to output unescaped HTML:
 <!-- Output: <p><strong>bold</strong></p> -->
 ```
 
-### Escaping literal braces
+### Literal braces
 
-Inside attribute values, `{{` and `}}` produce literal `{` and `}` characters:
+Use a string expression or HTML entities when you need literal `{` / `}` in output:
 
 ```html
-<div data-value="{{ literal braces }}">…</div>
+<div data-value="{ '{ literal braces }' }">…</div>
+<!-- or -->
+<div data-value="&#123; literal braces &#125;">…</div>
 ```
+
+Adjacent `{{` is nested JavaScript (e.g. object literals), not an escape: `data-example="{{ foo: 1 }}"`.
 
 ## Loops
 

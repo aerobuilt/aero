@@ -64,7 +64,7 @@ export type ReactiveAttributeClassification =
 function isSingleWrappedExpression(value: string): boolean {
 	const trimmed = value.trim()
 	if (!trimmed) return false
-	const segments = tokenizeCurlyInterpolation(trimmed, { attributeMode: true })
+	const segments = tokenizeCurlyInterpolation(trimmed)
 	return (
 		segments.length === 1 &&
 		segments[0].kind === 'interpolation' &&

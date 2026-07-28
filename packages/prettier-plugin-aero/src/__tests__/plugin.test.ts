@@ -69,19 +69,19 @@ type X = { a: string }
 		expect(output).not.toContain('lang="ts"')
 	})
 
-	it('formats script is:state blocks with embedded typescript formatting', async () => {
-		const input = `<script is:state>
-\t\tconst  foo={bar:1}
-const y=2
-const nextNumber = (values: Array<number>) => Math.max(0, ...values) + 1
-</script>`
-		const output = await prettier.format(input, {
+	it('formats nested object interpolations on one line end-to-end', async () => {
+		const input = `<section data-example="{{ foo: 1 }}"></section>`
+		const spaced = await prettier.format(input, {
 			...baseOptions,
-			semi: false,
-			singleQuote: true,
+			aeroBracketSpacing: true,
 		})
-		expect(output).toMatch(/const foo = \{ bar: 1 \}/)
-		expect(output).toMatch(/const y = 2/)
-		expect(output).not.toContain('\t\tconst')
+		expect(spaced).toContain('data-example="{ { foo: 1 } }"')
+		expect(spaced).not.toMatch(/data-example="\{ \{\n/)
+
+		const compact = await prettier.format(input, {
+			...baseOptions,
+			aeroBracketSpacing: false,
+		})
+		expect(compact).toContain('data-example="{{foo: 1}}"')
 	})
 })

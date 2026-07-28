@@ -38,10 +38,10 @@ Compose strings with inline expressions:
 <my-component title="Slug: { Aero.page.params.slug }" />
 ```
 
-Use double braces to output literal `{` and `}` in strings:
+Use a string expression to output literal `{` and `}` in strings:
 
 ```html
-<my-component title="{{ slug }} + { Aero.page.params.slug }" />
+<my-component title="{ '{ slug } + ' + Aero.page.params.slug }" />
 ```
 
 **3. Spread with props**

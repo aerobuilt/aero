@@ -230,10 +230,30 @@ let active = false</script>
 		expect(output).toContain('title="{ title }/{ slug }"')
 	})
 
-	it('does not treat attribute-mode literal braces as interpolations', async () => {
+	it('formats adjacent {{ object }} interpolations with aeroBracketSpacing', async () => {
+		const input = '<section data-example="{{ foo: 1 }}"></section>'
+		const spaced = await formatAero(input, { aeroBracketSpacing: true })
+		expect(spaced).toContain('data-example="{ { foo: 1 } }"')
+		expect(spaced).not.toMatch(/data-example="\{ \{\n/)
+
+		const compact = await formatAero(input, { aeroBracketSpacing: false })
+		expect(compact).toContain('data-example="{{foo: 1}}"')
+	})
+
+	it('keeps spaced object literal interpolations on one line', async () => {
+		const input = '<section data-example="{ { foo: 1 } }"></section>'
+		const spaced = await formatAero(input, { aeroBracketSpacing: true })
+		expect(spaced).toContain('data-example="{ { foo: 1 } }"')
+		expect(spaced).not.toMatch(/data-example="\{ \{\n/)
+
+		const compact = await formatAero(input, { aeroBracketSpacing: false })
+		expect(compact).toContain('data-example="{{foo: 1}}"')
+	})
+
+	it('formats nested object and sibling interpolations in mixed attributes', async () => {
 		const input = '<my-comp-component title="{{ slug }} + {slug}" />'
 		const output = await formatAero(input, { aeroBracketSpacing: true })
-		expect(output).toContain('title="{{ slug }} + { slug }"')
+		expect(output).toContain('title="{ { slug } } + { slug }"')
 	})
 
 	it('does not corrupt nested markup when compacting bracket spacing', async () => {

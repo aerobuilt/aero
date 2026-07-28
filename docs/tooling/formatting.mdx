@@ -49,7 +49,7 @@ The plugin adds three **Aero-only** options (also set in `.prettierrc.json` or u
 | Option | Default | Description |
 |--------|---------|-------------|
 | `aeroAttributePrefix` | `"none"` | Prefix form for Aero framework attributes (see below). |
-| `aeroBracketSpacing` | `true` | When `true`, use `{ expr }` wrapper spacing in directive values and text interpolation. When `false`, use `{expr}`. Inner JS/TS still follows Prettier's `bracketSpacing` for object literals. |
+| `aeroBracketSpacing` | `true` | When `true`, use `{ expr }` wrapper spacing in directive values and text interpolation. When `false`, use `{expr}`. Nested object interpolations follow the same option (`{ { foo: 1 } }` vs `{{foo: 1}}`) and stay on one line. Other JS/TS still uses Prettier's `bracketSpacing`. |
 | `aeroSelfClosingComponents` | `true` | When `true`, prefer `<my-component />` for `*-component` tags with no element children. `*-layout` tags always keep explicit close tags. |
 
 ### What `aeroAttributePrefix` rewrites

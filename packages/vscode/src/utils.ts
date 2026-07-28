@@ -91,7 +91,7 @@ export function getIgnoredRanges(text: string): IgnoredRange[] {
 		ranges.push({ start, end })
 	}
 
-	for (const range of collectInterpolationBodyRanges(text, { attributeMode: false })) {
+	for (const range of collectInterpolationBodyRanges(text)) {
 		ranges.push({ start: range.start - 1, end: range.end + 1 })
 	}
 

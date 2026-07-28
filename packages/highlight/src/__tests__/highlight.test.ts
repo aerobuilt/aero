@@ -189,6 +189,21 @@ describe('highlight', () => {
 		expect(html).toContain('site')
 	})
 
+	it('highlights nested object interpolations in aero-html attributes', async () => {
+		const code = '<section data-example="{{ foo: 1 }}"></section>'
+		const html = await highlight(code, 'aero-html', {
+			theme: 'github-light',
+			langs: ['html', 'typescript', aeroHtml],
+		})
+
+		expect(html).toContain('class="shiki')
+		expect(html).toContain('data-example')
+		expect(html).toContain('foo')
+		// Outer braces should be present as tokenized content (not stripped)
+		expect(html).toMatch(/\{/)
+		expect(html).toMatch(/\}/)
+	})
+
 	it('highlights via html alias', async () => {
 		const code = '<div props="{ x: 1 }" />'
 		const html = await highlight(code, 'html', {

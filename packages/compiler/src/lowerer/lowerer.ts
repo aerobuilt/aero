@@ -237,7 +237,7 @@ export class Lowerer {
 			this.reactiveState &&
 			reactiveBindingNames &&
 			textReferencesStateBindings(text, reactiveBindingNames, value =>
-				tokenizeCurlyInterpolation(value, { attributeMode: false })
+				tokenizeCurlyInterpolation(value)
 			)
 		) {
 			const bindId = parentHoist?.textHoistBindId ?? this.reactiveState.nextTextBindId()
@@ -492,7 +492,7 @@ export class Lowerer {
 				if (
 					soleText?.textContent &&
 					textReferencesStateBindings(soleText.textContent, this.reactiveState.bindingNames, value =>
-						tokenizeCurlyInterpolation(value, { attributeMode: false })
+						tokenizeCurlyInterpolation(value)
 					)
 				) {
 					childHoist.textHoistBindId = this.reactiveState.nextTextBindId()
@@ -892,7 +892,7 @@ export class Lowerer {
 		for (const name of stateBindingNames) allowed.add(name)
 		for (const name of this.buildScopeNames) allowed.add(name)
 		for (const name of forBodyScopeNames ?? []) allowed.add(name)
-		for (const segment of tokenizeCurlyInterpolation(text, { attributeMode: false })) {
+		for (const segment of tokenizeCurlyInterpolation(text)) {
 			if (segment.kind !== 'interpolation') continue
 			const expr = segment.expression?.trim() ?? ''
 			if (!expr) continue

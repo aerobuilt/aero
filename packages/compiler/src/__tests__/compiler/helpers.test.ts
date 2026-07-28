@@ -61,8 +61,8 @@ describe('compileInterpolation', () => {
 		expect(compileInterpolation('{ trimEnd(text) }')).toBe('${ trimEnd(text) }')
 	})
 
-	it('should handle double braces as literal braces in text content', () => {
-		expect(compileInterpolation('{{ literal }}')).toBe('{ literal }')
+	it('should treat adjacent {{ as nested JS in text content', () => {
+		expect(compileInterpolation('{{ literal }}')).toBe('${escapeHtml({ literal })}')
 	})
 })
 
@@ -95,12 +95,12 @@ describe('compileAttributeInterpolation', () => {
 		expect(compileAttributeInterpolation('path \\ value')).toBe('path \\\\ value')
 	})
 
-	it('should handle escaped braces {{ and }}', () => {
-		expect(compileAttributeInterpolation('{{ literal }}')).toBe('{ literal }')
+	it('should treat adjacent {{ as nested JS', () => {
+		expect(compileAttributeInterpolation('{{ literal }}')).toBe('${{ literal }}')
 	})
 
-	it('should handle mixed escaped and interpolation', () => {
-		expect(compileAttributeInterpolation('{{ {expr} }}')).toBe('{ ${expr} }')
+	it('should treat {{ {expr} }} as nested JS', () => {
+		expect(compileAttributeInterpolation('{{ {expr} }}')).toBe('${{ {expr} }}')
 	})
 })
 

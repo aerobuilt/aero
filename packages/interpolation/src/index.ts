@@ -23,11 +23,6 @@ export type InterpolationSegment = {
 
 export type Segment = LiteralSegment | InterpolationSegment
 
-export interface TokenizeOptions {
-	/** When true, `{{` and `}}` emit literal `{` and `}`; otherwise they are two braces. */
-	attributeMode?: boolean
-}
-
 /** Escape characters with special meaning inside generated template literals. */
 export function escapeTemplateLiteralContent(value: string): string {
 	return value.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$\{/g, '\\${')
@@ -45,14 +40,12 @@ export function stripBraces(s: string): string {
 /**
  * Tokenize a string into literal and interpolation segments. Tracks nesting and
  * string/comment context so expressions like `{ a({ b: 1 }) }` or `{ "}" }` are
- * one interpolation.
+ * one interpolation. Adjacent `{{` is nested JS (Svelte-style), not an escape.
  *
  * @param text - Input string (e.g. attribute value or text content).
- * @param options - `attributeMode: true` for attribute values ({{ / }} = literal braces).
  * @returns Array of segments in order.
  */
-export function tokenizeCurlyInterpolation(text: string, options: TokenizeOptions = {}): Segment[] {
-	const attributeMode = options.attributeMode ?? false
+export function tokenizeCurlyInterpolation(text: string): Segment[] {
 	const segments: Segment[] = []
 	let i = 0
 	let depth = 0
@@ -108,24 +101,6 @@ export function tokenizeCurlyInterpolation(text: string, options: TokenizeOption
 			}
 			i++
 			continue
-		}
-
-		// Attribute mode: {{ → literal {, }} → literal }
-		if (attributeMode && depth === 0) {
-			if (char === '{' && next === '{') {
-				pushLiteral(literalStart, i)
-				segments.push({ kind: 'literal', start: i, end: i + 2, value: '{' })
-				literalStart = i + 2
-				i += 2
-				continue
-			}
-			if (char === '}' && next === '}') {
-				pushLiteral(literalStart, i)
-				segments.push({ kind: 'literal', start: i, end: i + 2, value: '}' })
-				literalStart = i + 2
-				i += 2
-				continue
-			}
 		}
 
 		if (char === '/' && next === '/' && depth > 0) {
@@ -206,12 +181,9 @@ export function restoreLiteralBraces(value: string): string {
 export type ByteRange = { readonly start: number; readonly end: number }
 
 /** Ranges of Aero `{ ... }` expression interiors (exclusive of the brace characters). */
-export function collectInterpolationBodyRanges(
-	text: string,
-	options: TokenizeOptions = {}
-): ByteRange[] {
+export function collectInterpolationBodyRanges(text: string): ByteRange[] {
 	const ranges: ByteRange[] = []
-	for (const seg of tokenizeCurlyInterpolation(text, options)) {
+	for (const seg of tokenizeCurlyInterpolation(text)) {
 		if (seg.kind === 'interpolation') {
 			ranges.push({ start: seg.start + 1, end: seg.end - 1 })
 		}
@@ -227,12 +199,9 @@ export function isOffsetInRanges(offset: number, ranges: readonly ByteRange[]): 
 }
 
 /** Mask Aero `{ ... }` expression bodies so markup-like text inside is not parsed as HTML. */
-export function maskInterpolationExpressionBodies(
-	text: string,
-	options: TokenizeOptions = {}
-): string {
+export function maskInterpolationExpressionBodies(text: string): string {
 	const chars = [...text]
-	for (const seg of tokenizeCurlyInterpolation(text, options)) {
+	for (const seg of tokenizeCurlyInterpolation(text)) {
 		if (seg.kind !== 'interpolation') continue
 		for (let i = seg.start + 1; i < seg.end - 1; i++) {
 			chars[i] = ' '
@@ -289,14 +258,14 @@ function isMarkupLt(text: string, index: number): boolean {
  * Escape `<` inside Aero `{ ... }` expression bodies so HTML parsers do not treat snippet
  * markup as real elements. Offsets are preserved; pair with {@link restoreInterpolationBodyMarkup}.
  */
-export function escapeInterpolationBodyMarkup(
-	text: string,
-	options: TokenizeOptions = {}
-): { text: string; restore: (value: string) => string } {
+export function escapeInterpolationBodyMarkup(text: string): {
+	text: string
+	restore: (value: string) => string
+} {
 	const maskedForTokenize = maskScriptAndStyleInner(text)
 	const scriptStyleRanges = collectScriptStyleInnerRanges(text)
 	const chars = [...text]
-	for (const seg of tokenizeCurlyInterpolation(maskedForTokenize, options)) {
+	for (const seg of tokenizeCurlyInterpolation(maskedForTokenize)) {
 		if (seg.kind !== 'interpolation') continue
 		for (let i = seg.start + 1; i < seg.end - 1; i++) {
 			if (isOffsetInRanges(i, scriptStyleRanges)) continue

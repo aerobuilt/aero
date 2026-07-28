@@ -88,7 +88,7 @@ function findRawTagClose(html: string, tagName: string, from: number): number {
 export function expandSelfClosingTags(html: string): string {
 	let out = ''
 	let cursor = 0
-	const interpolationBodies = collectInterpolationBodyRanges(html, { attributeMode: false })
+	const interpolationBodies = collectInterpolationBodyRanges(html)
 
 	while (cursor < html.length) {
 		const tagStart = html.indexOf('<', cursor)

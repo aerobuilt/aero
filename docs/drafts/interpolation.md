@@ -2,8 +2,8 @@
 
 ## Text and attribute interpolation
 
-- **Single braces:** `{ expression }` is one interpolation; the expression is evaluated at render time and the result is used (stringified in text, or as the value in attributes).
-- **In attribute values only:** `{{` and `}}` are escapes that produce a literal `{` or `}` character. So you can output a literal brace inside an attribute.
+- **Single braces:** `{ expression }` is one interpolation; the expression is evaluated at render time and the result is used (stringified in text, or as the value in attributes). Adjacent `{{` is nested JS (Svelte-style), e.g. object literals: `props="{{ foo: 1 }}"`.
+- **Literal braces:** use a string expression (`{ '{…}' }`) or HTML entities (`&#123;` / `&#125;`). There is no `{{` escape dialect.
 
 ## Auto-escaping
 
