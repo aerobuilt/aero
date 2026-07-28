@@ -1,5 +1,4 @@
-import type { AeroContentOptions } from '@aero-js/content/vite'
-import type { AeroOptions } from '../types'
+import type { AeroContentOptions, AeroOptions } from '../types'
 
 /** Resolve `content: true | AeroContentOptions` to plugin options, or undefined when disabled. */
 export function resolveContentOptions(

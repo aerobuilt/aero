@@ -4,7 +4,6 @@
 		"module": "ES2020",
 		"moduleResolution": "bundler",
 		"paths": {
-			"@aero-js/core/editor": ["../core/dist/entry-editor.d.mts"],
 			"@aero-js/core/utils/aliases": ["../core/dist/utils/aliases.d.mts"]
 		},
 		"lib": ["ES2020"],

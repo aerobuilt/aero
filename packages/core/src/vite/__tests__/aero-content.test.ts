@@ -6,8 +6,8 @@ const aeroContentMock = vi.fn((options?: unknown) => ({
 	...(options !== undefined ? { options } : {}),
 }))
 
-vi.mock('@aero-js/content/vite', () => ({
-	aeroContent: (options?: unknown) => aeroContentMock(options),
+vi.mock('../load-aero-content', () => ({
+	loadAeroContentPlugin: () => aeroContentMock,
 }))
 
 vi.mock('vite-plugin-image-optimizer', () => ({

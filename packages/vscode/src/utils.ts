@@ -1,7 +1,7 @@
 /**
  * Shared utilities: kebab-case conversion, import extraction, and scope lookup.
  */
-import { analyzeBuildScriptForEditor } from '@aero-js/core/editor'
+import { analyzeBuildScriptForEditor } from '@aero-js/compiler/build-script-analysis'
 import { collectInterpolationBodyRanges } from '@aero-js/interpolation'
 import type { TemplateScope } from './analyzer'
 import { parseScriptBlocks } from './script-tag'

@@ -3,7 +3,6 @@ import { defineConfig } from 'tsdown'
 const entry = [
 	'src/entry-dev.ts',
 	'src/entry-prod.ts',
-	'src/entry-editor.ts',
 	'src/types.ts',
 	'src/vite/index.ts',
 	'src/template-diagnostics-api.ts',

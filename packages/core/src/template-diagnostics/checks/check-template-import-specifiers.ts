@@ -4,7 +4,7 @@ import { rangeFromOffsets, type SourceDocument, type SourceRange } from '../sour
 /**
  * Diagnostic check: template imports must include an explicit `.html` extension.
  */
-import { analyzeBuildScriptForEditor } from '../../entry-editor'
+import { analyzeBuildScriptForEditor } from '@aero-js/compiler/build-script-analysis'
 import { isTemplateAliasSpecifier } from '../importResolution'
 import { parseScriptBlocks } from '../script-tag'
 

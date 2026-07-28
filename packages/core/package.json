@@ -70,10 +70,6 @@
 			"types": "./dist/utils/redirects.d.mts",
 			"default": "./dist/utils/redirects.mjs"
 		},
-		"./editor": {
-			"types": "./dist/entry-editor.d.mts",
-			"default": "./dist/entry-editor.mjs"
-		},
 		"./template-diagnostics": {
 			"types": "./dist/template-diagnostics-api.d.mts",
 			"default": "./dist/template-diagnostics-api.mjs"
@@ -104,7 +100,6 @@
 	},
 	"dependencies": {
 		"@aero-js/compiler": "workspace:*",
-		"@aero-js/content": "workspace:*",
 		"@aero-js/diagnostics": "workspace:*",
 		"@aero-js/html-parser": "workspace:*",
 		"@aero-js/hypermedia": "workspace:*",
@@ -131,9 +126,13 @@
 		"vitest": "catalog:"
 	},
 	"peerDependencies": {
+		"@aero-js/content": ">=0.4.0",
 		"vite": "^8.1.0"
 	},
 	"peerDependenciesMeta": {
+		"@aero-js/content": {
+			"optional": true
+		},
 		"vite": {
 			"optional": true
 		}
