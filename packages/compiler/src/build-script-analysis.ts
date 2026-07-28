@@ -381,6 +381,79 @@ function pushRangeSliceIfPresent(
 }
 
 /**
+ * Extract required prop names from `const { … } = Aero.props` destructuring.
+ * Bindings without a default are required; bindings with a default are optional.
+ * Does not consult TypeScript interfaces — callers that have `as Type` should prefer the type.
+ *
+ * @param script - Raw build script content (JS or TS).
+ * @returns Required public prop names (object keys), or [] if none / parse error.
+ */
+export function getRequiredPropsFromAeroPropsDestructure(script: string): string[] {
+	if (!script.trim()) return []
+
+	const result = parseBuildScript(script)
+	if (result.errors.length > 0) return []
+
+	const body = (result.program as { body?: unknown[] }).body
+	if (!body) return []
+
+	const required: string[] = []
+	for (const stmt of body) {
+		const n = asAstNodeLike(stmt)
+		if (!n || !isVariableDeclarationNode(n)) continue
+		for (const decl of (n.declarations as unknown[]) ?? []) {
+			const d = asAstNodeLike(decl)
+			if (!d || !isObjectPatternNode(d.id)) continue
+			if (!isAeroPropsInit(d.init)) continue
+			const pattern = asAstNodeLike(d.id)
+			for (const property of (pattern?.properties as unknown[]) ?? []) {
+				const prop = asAstNodeLike(property)
+				if (!prop || !hasNodeType(prop, 'Property')) continue
+				if (prop.computed === true) continue
+				const propName = propertyKeyName(prop.key)
+				if (!propName) continue
+				const value = asAstNodeLike(prop.value)
+				if (!value) continue
+				if (hasNodeType(value, 'AssignmentPattern')) continue
+				if (hasNodeType(value, 'Identifier')) {
+					required.push(propName)
+				}
+			}
+		}
+	}
+	return required
+}
+
+function isAeroPropsInit(init: unknown): boolean {
+	return isAeroProps(unwrapTsExpression(init))
+}
+
+function unwrapTsExpression(node: unknown): unknown {
+	let current = node
+	while (true) {
+		const n = asAstNodeLike(current)
+		if (!n) return current
+		if (
+			hasNodeType(n, 'TSAsExpression') ||
+			hasNodeType(n, 'TSSatisfiesExpression') ||
+			hasNodeType(n, 'TSNonNullExpression')
+		) {
+			current = n.expression
+			continue
+		}
+		return current
+	}
+}
+
+function propertyKeyName(key: unknown): string | null {
+	const n = asAstNodeLike(key)
+	if (!n) return null
+	if (hasNodeType(n, 'Identifier')) return getIdentifierName(n)
+	if (hasNodeType(n, 'Literal') && typeof n.value === 'string') return n.value
+	return null
+}
+
+/**
  * Extract verbatim source slices for top-level `interface` / `type` / `enum` declarations
  * (including `export …`), for injection into template expression ambient TypeScript.
  *

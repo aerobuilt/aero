@@ -6,7 +6,7 @@ import * as fs from 'node:fs'
 import { COMPONENT_SUFFIX_REGEX } from '../constants'
 import type { PathResolver } from '../path-resolver'
 import { kebabToCamelCase, collectImportedSpecifiersFromDocument } from '../utils'
-import { getRequiredPropsFromType, getPropsTypeFromComponent } from '../propsValidation'
+import { getRequiredPropsFromComponent } from '../propsValidation'
 
 /** Maximum layout chain depth to prevent infinite loops. */
 const MAX_LAYOUT_CHAIN_DEPTH = 10
@@ -42,14 +42,7 @@ export function traceLayoutToSinkProps(
 		if (!childPath) break
 		if (childTag.endsWith('-component')) {
 			const compContent = fs.readFileSync(childPath, 'utf-8')
-			const propsType = getPropsTypeFromComponent(compContent)
-			if (!propsType) return null
-			const required = getRequiredPropsFromType(
-				propsType.typeName,
-				compContent,
-				childPath,
-				resolver
-			)
+			const required = getRequiredPropsFromComponent(compContent, childPath, resolver)
 			return required?.length ? { requiredProps: required } : null
 		}
 		currentPath = childPath

@@ -29,6 +29,11 @@ export interface CollectTemplateDiagnosticsInput {
 	root: string
 	workspaceRoot?: string
 	flags?: FeatureGateFlags
+	/**
+	 * Optional overlay for cross-file reads (e.g. open unsaved editor buffers).
+	 * Return `undefined` to fall back to reading from disk.
+	 */
+	readTextFile?: (absolutePath: string) => string | undefined
 }
 
 export function collectTemplateDiagnostics(input: CollectTemplateDiagnosticsInput): AeroDiagnostic[] {
@@ -54,7 +59,8 @@ export function collectTemplateDiagnostics(input: CollectTemplateDiagnosticsInpu
 		diagnostics,
 		resolver,
 		parsed.definedVariables,
-		parsed.variablesByScope.state
+		parsed.variablesByScope.state,
+		input.readTextFile
 	)
 	checkUndefinedScriptVariables(document, parsed, diagnostics)
 	checkReadonlyReactivePropWrites(document, parsed, diagnostics)

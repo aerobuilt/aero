@@ -61,6 +61,16 @@ export interface HeaderProps {
 </script>
 ```
 
+When you use `as TypeName`, required vs optional comes from the interface (`name` vs `name?`). Without a cast, Aero infers required props from destructuring defaults: no default means required at the call site; a default means optional.
+
+```html
+<script is:build>
+	const { title, body = 'No body provided.' } = Aero.props
+</script>
+```
+
+Here `title` is required and `body` is optional for `aero check` and IDE diagnostics.
+
 ## Typing content collections
 
 Use a schema validator in `content.config.ts` to type collection entries:

@@ -2241,7 +2241,124 @@ let count = 1
 		}
 	})
 
-	it('should report plain reactive props when the child assigns them', () => {
+	it('should report bind when child uses undestructured Aero.props bag', () => {
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-vscode-reactive-props-bag-'))
+		try {
+			const compPath = path.join(dir, 'counter.html')
+			const pagePath = path.join(dir, 'page.html')
+			fs.writeFileSync(
+				compPath,
+				`<script is:state>
+const props = Aero.props
+</script>
+<p>{ props.count }</p>
+`,
+				'utf-8'
+			)
+			const pageText = `<script is:build>
+import counter from './counter.html'
+</script>
+<script is:state>
+let count = 1
+</script>
+<counter-component bind:count="{ count }" />
+`
+			fs.writeFileSync(pagePath, pageText, 'utf-8')
+			const doc = {
+				uri: {
+					toString: () => `file://${pagePath}`,
+					fsPath: pagePath,
+					scheme: 'file',
+				},
+				getText: () => pageText,
+				positionAt: (offset: number) => {
+					const lines = pageText.slice(0, offset).split('\n')
+					return {
+						line: lines.length - 1,
+						character: lines[lines.length - 1]?.length ?? 0,
+					}
+				},
+				languageId: 'html',
+				fileName: pagePath,
+				lineAt: (line: number) => ({
+					text: pageText.split('\n')[line] ?? '',
+				}),
+			} as any
+
+			runDiagnostics(doc)
+
+			const reportedDiagnostics = mockSet.mock.calls[0]?.[1] ?? []
+			const bind = reportedDiagnostics.find((d: any) =>
+				d.message.includes('must be declared with `Aero.bindable()`')
+			)
+			expect(bind).toBeDefined()
+			expect(bind.code.value).toBe('AERO_COMPILE')
+			expectDiagnosticRange(pageText, bind, 'bind:count="{ count }"')
+		} finally {
+			fs.rmSync(dir, { recursive: true, force: true })
+		}
+	})
+
+	it('should report bind when bind name is not a known bindable child prop', () => {
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-vscode-reactive-props-unknown-bind-'))
+		try {
+			const compPath = path.join(dir, 'counter.html')
+			const pagePath = path.join(dir, 'page.html')
+			fs.writeFileSync(
+				compPath,
+				`<script is:state>
+const { value = Aero.bindable(0) } = Aero.props
+</script>
+<p>{ value }</p>
+`,
+				'utf-8'
+			)
+			const pageText = `<script is:build>
+import counter from './counter.html'
+</script>
+<script is:state>
+let count = 1
+</script>
+<counter-component bind:count="{ count }" />
+`
+			fs.writeFileSync(pagePath, pageText, 'utf-8')
+			const doc = {
+				uri: {
+					toString: () => `file://${pagePath}`,
+					fsPath: pagePath,
+					scheme: 'file',
+				},
+				getText: () => pageText,
+				positionAt: (offset: number) => {
+					const lines = pageText.slice(0, offset).split('\n')
+					return {
+						line: lines.length - 1,
+						character: lines[lines.length - 1]?.length ?? 0,
+					}
+				},
+				languageId: 'html',
+				fileName: pagePath,
+				lineAt: (line: number) => ({
+					text: pageText.split('\n')[line] ?? '',
+				}),
+			} as any
+
+			runDiagnostics(doc)
+
+			const reportedDiagnostics = mockSet.mock.calls[0]?.[1] ?? []
+			const bind = reportedDiagnostics.find((d: any) =>
+				d.message.includes('must be declared with `Aero.bindable()`') &&
+				d.message.includes('`count`')
+			)
+			expect(bind).toBeDefined()
+			expect(bind.code.value).toBe('AERO_COMPILE')
+			expectDiagnosticRange(pageText, bind, 'bind:count="{ count }"')
+		} finally {
+			fs.rmSync(dir, { recursive: true, force: true })
+		}
+	})
+
+	it('should report plain reactive props when the child declares them bindable', () => {
 		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-vscode-reactive-props-write-'))
 		try {
 			const compPath = path.join(dir, 'counter.html')
@@ -2290,7 +2407,7 @@ let count = 1
 
 			const reportedDiagnostics = mockSet.mock.calls[0]?.[1] ?? []
 			const readonly = reportedDiagnostics.find((d: any) =>
-				d.message.includes('is readonly; use `bind:count="{ ... }"`')
+				d.message.includes('must be passed with `bind:count="{ ... }"`')
 			)
 			expect(readonly).toBeDefined()
 			expect(readonly.code.value).toBe('AERO_COMPILE')

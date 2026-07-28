@@ -8,6 +8,7 @@ import {
 	analyzeBuildScriptForEditor,
 	extractBuildScriptTypeDeclarationTexts,
 	getPropsTypeFromBuildScript,
+	getRequiredPropsFromAeroPropsDestructure,
 } from '../../build-script-analysis'
 
 describe('analyzeBuildScript', () => {
@@ -235,6 +236,28 @@ const props = Aero.props`
 
 	it('returns null for empty script', () => {
 		expect(getPropsTypeFromBuildScript('   \n  ')).toBeNull()
+	})
+})
+
+describe('getRequiredPropsFromAeroPropsDestructure', () => {
+	it('marks bindings without defaults as required and defaults as optional', () => {
+		const script = `const { title, body = 'No body provided.', subtitle } = Aero.props`
+		expect(getRequiredPropsFromAeroPropsDestructure(script)).toEqual(['title', 'subtitle'])
+	})
+
+	it('uses the public prop name for renames', () => {
+		const script = `const { title: heading, count = 0 } = Aero.props`
+		expect(getRequiredPropsFromAeroPropsDestructure(script)).toEqual(['title'])
+	})
+
+	it('still extracts required names when Aero.props is cast', () => {
+		const script = `const { title, body = 'x' } = Aero.props as CardProps`
+		expect(getRequiredPropsFromAeroPropsDestructure(script)).toEqual(['title'])
+	})
+
+	it('returns empty when there is no Aero.props destructure', () => {
+		expect(getRequiredPropsFromAeroPropsDestructure('const props = Aero.props')).toEqual([])
+		expect(getRequiredPropsFromAeroPropsDestructure('')).toEqual([])
 	})
 })
 

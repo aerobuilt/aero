@@ -10,14 +10,14 @@ import type { PathResolver } from '../path-resolver'
 import type { VariableDefinition } from '../analyzer'
 import { kebabToCamelCase, collectImportedSpecifiersFromDocument } from '../utils'
 import { isValidTemplateImportSpecifier } from '../importResolution'
-import { getRequiredPropsFromType, getPropsTypeFromComponent } from '../propsValidation'
+import { getRequiredPropsFromComponent } from '../propsValidation'
 import { getIgnoredRanges, isInRanges } from './helpers'
 import {
 	resolvePropsSpreadVariable,
 	validateIndividualAttrs,
 	validateSpreadProps,
 } from './component-required-props'
-import { validateComponentReactiveProps } from './component-reactive-props'
+import { validateComponentReactiveProps, validateComponentBindRequiresState } from './component-reactive-props'
 import { traceLayoutToSinkProps } from './layout-props-chain'
 
 export { resolvePropsSpreadVariable } from './component-required-props'
@@ -32,7 +32,8 @@ export function checkComponentProps(
 	diagnostics: AeroDiagnostic[],
 	resolver: PathResolver,
 	definedVars: Map<string, VariableDefinition>,
-	stateVars: Map<string, VariableDefinition> = new Map()
+	stateVars: Map<string, VariableDefinition> = new Map(),
+	readTextFile?: (absolutePath: string) => string | undefined
 ): void {
 	const imports = collectImportedSpecifiersFromDocument(text)
 	const ignoredRanges = getIgnoredRanges(text)
@@ -61,6 +62,16 @@ export function checkComponentProps(
 		if (!resolvedPath) continue
 
 		const suffix = suffixMatch[1] as string
+		if (suffix === 'component' || suffix === 'layout') {
+			validateComponentBindRequiresState(
+				document,
+				diagnostics,
+				tagStart,
+				fullTag,
+				tagName,
+				stateVars
+			)
+		}
 		if (suffix === 'component') {
 			validateComponentReactiveProps(
 				document,
@@ -71,7 +82,8 @@ export function checkComponentProps(
 				baseName,
 				importName,
 				resolvedPath,
-				stateVars
+				stateVars,
+				readTextFile
 			)
 		}
 
@@ -109,12 +121,17 @@ export function checkComponentProps(
 		}
 
 		// Component: check props="{ ...varName }"
-		const componentContent = fs.readFileSync(resolvedPath, 'utf-8')
-		const propsType = getPropsTypeFromComponent(componentContent)
-		if (!propsType) continue
-
-		const requiredProps = getRequiredPropsFromType(
-			propsType.typeName,
+		const componentContent =
+			readTextFile?.(resolvedPath) ??
+			(() => {
+				try {
+					return readTextFile?.(fs.realpathSync(resolvedPath))
+				} catch {
+					return undefined
+				}
+			})() ??
+			fs.readFileSync(resolvedPath, 'utf-8')
+		const requiredProps = getRequiredPropsFromComponent(
 			componentContent,
 			resolvedPath,
 			resolver

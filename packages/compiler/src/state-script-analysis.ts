@@ -166,17 +166,19 @@ function reactivePropBindingFromProperty(
 		}
 	}
 	if (value?.type === 'AssignmentPattern' && value.left?.type === 'Identifier') {
-		const bindable = isAeroBindableCall(value.right)
+		const bindableCall = isAeroBindableCall(value.right) ? unwrapExpression(value.right) : null
+		const bindable = bindableCall != null
+		const hasBindableFallback = Boolean(bindableCall?.arguments?.[0])
 		return {
 			name: value.left.name,
 			propName,
 			derived: false,
 			dependencies: [],
 			initExpr: bindable
-				? bindableFallbackExprSource(script, unwrapExpression(value.right))
+				? bindableFallbackExprSource(script, bindableCall)
 				: initExprSource(script, value.right),
 			reactiveProp: true,
-			required: false,
+			required: bindable ? !hasBindableFallback : false,
 			...(bindable ? { bindable: true } : {}),
 		}
 	}

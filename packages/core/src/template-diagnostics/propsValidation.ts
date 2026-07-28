@@ -3,7 +3,11 @@
  * with passed props for cross-file validation diagnostics.
  */
 import * as fs from 'node:fs'
-import { getPropsTypeFromBuildScript, analyzeBuildScriptForEditor } from '../entry-editor'
+import {
+	getPropsTypeFromBuildScript,
+	getRequiredPropsFromAeroPropsDestructure,
+	analyzeBuildScriptForEditor,
+} from '../entry-editor'
 import type { PathResolver } from './path-resolver'
 import { parseScriptBlocks } from './script-tag'
 
@@ -99,6 +103,32 @@ export function getRequiredPropsFromType(
 		}
 	}
 	return null
+}
+
+/**
+ * Resolve required build props for a component: prefer `as Type` interface `?`,
+ * otherwise infer from `const { … } = Aero.props` destructuring defaults.
+ */
+export function getRequiredPropsFromComponent(
+	componentContent: string,
+	componentPath: string,
+	resolver: PathResolver
+): string[] | null {
+	const buildScript = getBuildScriptContent(componentContent)
+	if (!buildScript) return null
+
+	const propsType = getPropsTypeFromBuildScript(buildScript)
+	if (propsType) {
+		return getRequiredPropsFromType(
+			propsType.typeName,
+			componentContent,
+			componentPath,
+			resolver
+		)
+	}
+
+	const fromDestructure = getRequiredPropsFromAeroPropsDestructure(buildScript)
+	return fromDestructure.length > 0 ? fromDestructure : null
 }
 
 export function getKeysFromObjectLiteral(literal: string): string[] {
