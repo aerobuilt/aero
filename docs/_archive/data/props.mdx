@@ -207,9 +207,9 @@ Aero compiles the spread into `:root` custom properties at build time:
 ```
 
 <Tip>
-	Pass `props="{...theme}"` (spread) to get one CSS variable per key. Pass `props="{{ theme }}"`
-	(object wrap) and you get a single `--theme` variable holding the whole object — not individual
-	properties.
+	Pass `props="{ ...theme }"` (spread) to get one CSS variable per key. Pass `props="{ theme }"`
+	and you get a single `--theme` variable holding the whole object — not individual properties.
+	Adjacent `{{` is nested JS (`props="{{ a: 1 }}"` ≈ an object literal expression).
 </Tip>
 
 ## HTML spec-compliant alternatives

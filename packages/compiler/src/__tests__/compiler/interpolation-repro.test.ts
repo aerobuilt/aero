@@ -33,7 +33,7 @@ describe('interpolation entity repro', () => {
     </script>
     <dt>&#123; escapedHtml &#125;</dt>
     <dd><code>{ escapedHtml }</code></dd>
-    <dd><code data-value="{{ literalBraces }}">{ literalBraces }</code></dd>`
+    <dd><code data-value="{ '{ literalBraces }' }">{ literalBraces }</code></dd>`
 
 		const parsed = parse(html)
 		const code = compile(parsed, {
@@ -49,8 +49,8 @@ describe('interpolation entity repro', () => {
 		expect(out).not.toContain('[object Object]')
 	})
 
-	it('supports double-brace literal syntax in text content', async () => {
-		const html = `<script is:build></script><p>{{ literal }}</p>`
+	it('supports string expressions for literal braces in text content', async () => {
+		const html = `<script is:build></script><p>{ '{ literal }' }</p>`
 		const parsed = parse(html)
 		const code = compile(parsed, {
 			root: '/',

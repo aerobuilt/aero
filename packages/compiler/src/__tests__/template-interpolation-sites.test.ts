@@ -103,7 +103,7 @@ function syncAuthLink(event) { event.preventDefault() }
 		expect(virtualText).toMatch(/declare const event: Event;\s*syncAuthLink\(event\)/)
 	})
 
-	it('does not typecheck double-brace literal syntax in text content', () => {
+	it('typechecks adjacent {{ as nested JS in text content', () => {
 		const html = `<script is:build>
 const count = 1
 const trustedHTML = '<em>Trusted HTML</em>'
@@ -113,8 +113,8 @@ const trustedHTML = '<em>Trusted HTML</em>'
 <p>{ count }</p>`
 		const sites = collectTemplateInterpolationSites(html)
 		const expressions = sites.map(s => s.expression.trim())
-		expect(expressions).not.toContain('{ raw(trustedHTML) }')
-		expect(expressions).not.toContain('{ count > 0 }')
+		expect(expressions).toContain('{ raw(trustedHTML) }')
+		expect(expressions).toContain('{ count > 0 }')
 		expect(expressions).toContain('count')
 	})
 

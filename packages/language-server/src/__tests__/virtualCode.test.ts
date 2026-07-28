@@ -863,13 +863,14 @@ const o = { a: 1 }
 		expect(getEmbeddedById(code, 'expr_1')).toBeUndefined()
 	})
 
-	it('treats {{ }} as literal braces in attribute values (no interpolation)', () => {
-		const html = `<div data-value="{{ not interpolated }}">{ real }</div>`
+	it('treats {{ }} as nested JS interpolation in attribute values', () => {
+		const html = `<div data-value="{{ notInterpolated }}">{ real }</div>`
 
 		const code = new AeroVirtualCode(createSnapshot(html))
 		const expr0 = getEmbeddedText(code, 'expr_0')!
-		expect(expr0).toContain(' real ')
-		expect(getEmbeddedById(code, 'expr_1')).toBeUndefined()
+		expect(expr0).toContain('{ notInterpolated }')
+		const expr1 = getEmbeddedText(code, 'expr_1')!
+		expect(expr1).toContain(' real ')
 	})
 
 	it('wraps props attribute spreads in object-then-array context for valid object spread', () => {

@@ -538,12 +538,12 @@ describe('Codegen', () => {
 		expect(renderedProps[0]).toEqual({ title: 'Hello' })
 	})
 
-	it('should support escaped literal braces in component prop strings via double braces', async () => {
+	it('should support literal braces in component prop strings via string expressions', async () => {
 		const html = `<script is:build>
 										const myComp = { name: 'comp' };
 										const slug = 'intro';
 									</script>
-									<my-comp-component title="{{ slug }} + { slug }" />`
+									<my-comp-component title="{ '{ slug } + ' + slug }" />`
 
 		const parsed = parse(html)
 		const code = compile(parsed, mockOptions)
@@ -1541,12 +1541,19 @@ describe('Codegen', () => {
 		})
 
 		it('should throw when props value is not a single braced expression (tokenizer validation)', () => {
-			// "{{ }}" is literal braces in attribute mode, so no interpolation segment
-			const html = `<script is:build></script><div props="{{ literal }}">x</div>`
+			const html = `<script is:build></script><div props="literal">x</div>`
 			const parsed = parse(html)
 			expect(() => compile(parsed, mockOptions)).toThrow(
 				'Directive `props` on <div> must use a braced expression'
 			)
+		})
+
+		it('accepts adjacent {{ as a single nested-JS braced props expression', () => {
+			const html = `<script is:build>
+				const literal = { a: 1 }
+			</script><div props="{{ ...literal }}">x</div>`
+			const parsed = parse(html)
+			expect(() => compile(parsed, mockOptions)).not.toThrow()
 		})
 
 		it('collects warning for non-directive attributes on wrapperless template', () => {

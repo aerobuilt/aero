@@ -244,7 +244,7 @@ export function warnWrapperlessTemplateAttributes(diag: LowererDiag, node: NodeL
 export function isSingleWrappedExpression(value: string): boolean {
 	const trimmed = value.trim()
 	if (!trimmed) return false
-	const segments = tokenizeCurlyInterpolation(trimmed, { attributeMode: true })
+	const segments = tokenizeCurlyInterpolation(trimmed)
 	return (
 		segments.length === 1 &&
 		segments[0].kind === 'interpolation' &&
@@ -290,8 +290,7 @@ export function parseComponentAttributes(node: NodeLike, diag: LowererDiag): Par
 			propVal = Helper.stripBraces(rawValue)
 		} else {
 			const compiled = Helper.compileAttributeInterpolation(rawValue)
-			const hasInterpolation =
-				compiled.includes('${') || rawValue.includes('{{') || rawValue.includes('}}')
+			const hasInterpolation = compiled.includes('${')
 			propVal = hasInterpolation ? `\`${compiled}\`` : JSON.stringify(rawValue)
 		}
 

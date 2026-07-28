@@ -121,7 +121,7 @@ export function validateSingleBracedExpression(
 	options: ValidateSingleBracedExpressionOptions = {}
 ): string {
 	const trimmed = value.trim()
-	const segments = tokenizeCurlyInterpolation(trimmed, { attributeMode: true })
+	const segments = tokenizeCurlyInterpolation(trimmed)
 	const ok =
 		segments.length === 1 &&
 		segments[0].kind === 'interpolation' &&
@@ -157,7 +157,7 @@ const INTERPOLATION_PASSTHROUGH_CALL = /^(raw|trim|trimStart|trimEnd)\s*\(/
  */
 export function compileInterpolation(text: string): string {
 	if (!text) return ''
-	const segments = tokenizeCurlyInterpolation(text, { attributeMode: true })
+	const segments = tokenizeCurlyInterpolation(text)
 	return segments
 		.map(seg => {
 			if (seg.kind === 'literal') {
@@ -177,7 +177,7 @@ export function compileInterpolation(text: string): string {
  */
 export function compileReactiveTextReadExpr(text: string): string {
 	if (!text) return "''"
-	const segments = tokenizeCurlyInterpolation(text, { attributeMode: true })
+	const segments = tokenizeCurlyInterpolation(text)
 	const parts = segments.map(seg => {
 		if (seg.kind === 'literal') {
 			return JSON.stringify(restoreLiteralBraces(seg.value))
@@ -193,12 +193,12 @@ export function compileReactiveTextReadExpr(text: string): string {
 }
 
 /**
- * Compile an attribute value: `{ expr }` → interpolation; `{{` / `}}` → literal `{` / `}`.
+ * Compile an attribute value: `{ expr }` → interpolation (Svelte-style nested braces OK).
  * Attributes are NOT auto-escaped (browser handles XML escaping).
  */
 export function compileAttributeInterpolation(text: string): string {
 	if (!text) return ''
-	const segments = tokenizeCurlyInterpolation(text, { attributeMode: true })
+	const segments = tokenizeCurlyInterpolation(text)
 	return segments
 		.map(seg => {
 			if (seg.kind === 'literal') {

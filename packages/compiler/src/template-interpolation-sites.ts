@@ -147,7 +147,7 @@ function collectAttributeInterpolations(
 
 			masks.push({ start: absValueStart, length: value.length })
 
-			const segments = tokenizeCurlyInterpolation(value, { attributeMode: true })
+			const segments = tokenizeCurlyInterpolation(value)
 			for (const seg of segments) {
 				if (seg.kind !== 'interpolation') continue
 				const expr = seg.expression
@@ -457,7 +457,7 @@ export function collectTemplateInterpolationSites(sourceText: string): TemplateI
 	}
 
 	const masked = applyMasks(maskForDirectiveValues(maskInactiveTemplateSource(sourceText)), masks)
-	for (const seg of tokenizeCurlyInterpolation(masked, { attributeMode: true })) {
+	for (const seg of tokenizeCurlyInterpolation(masked)) {
 		if (seg.kind !== 'interpolation') continue
 		const expr = seg.expression
 		if (!expr.trim()) continue

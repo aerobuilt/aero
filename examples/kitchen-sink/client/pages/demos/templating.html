@@ -21,16 +21,17 @@
 			<hr />
 		</header>
 
-		<main>
+		<main data-example="{ { foo: 1 } }">
 			<header>
 				<h2>Interpolation</h2>
 				<p>
-					Single braces for for regular JS expressions (auto-escaped), raw() for rendering raw HTML,
-					and double braces for literal braces.
+					<code>{ '{ expr }' }</code> for JS expressions (auto-escaped), <code>raw()</code> for raw
+					HTML, and string expressions (or entities) for literal braces. Adjacent
+					<code>{ `{{ ... }}` }</code> is nested JS (e.g. objects).
 				</p>
 			</header>
 
-			<section data-example="{{ foo: 1 }}">
+			<section>
 				<dl class="grid gap-4 text-sm not-prose">
 					<div class="grid md:grid-cols-2 gap-4">
 						<dt>
@@ -70,8 +71,8 @@
 				<header>
 					<h2>Build-time <code>if</code> / <code>else-if</code> / <code>else</code></h2>
 					<p>
-						If <code>count = { count }</code> at build, then <code>if="{{ count > 0 }}"</code> will
-						be rendered as <code>if="{ count > 0 }"</code>
+						With <code>count = { count }</code> at build, <code>if="{ count > 0 }"</code> chooses
+						the matching branch.
 					</p>
 				</header>
 

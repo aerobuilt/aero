@@ -17,7 +17,7 @@ This directory contains the main documentation for the [Aero](https://github.com
 
 ## Components and templating
 
-- **[Interpolation](interpolation.md)** — `{ }` expressions in text and attributes, `{{`/`}}` escapes, and `props` semantics (spread for object properties as CSS vars).
+- **[Interpolation](interpolation.md)** — `{ }` expressions in text and attributes (Svelte-style nested braces), literal braces via string expressions / entities, and `props` semantics (spread for object properties as CSS vars).
 - **[HTML `<template>`](html-template-element.md)** — Wrapperless `if` / `for` (no extra element in output), literal inert templates, and restricted HTML contexts.
 - **[Props guide](props.md)** — Passing and receiving props, how attribute values work, `props`, and globals.
 - **[Slot passthrough](slot-passthrough.md)** — Passing named slots through layout hierarchies.

@@ -109,9 +109,7 @@ export function collectTemplateReferences(
 					extractIdentifiers(value, absValueStart, document, refs, true, true)
 					maskRange(absValueStart, value.length)
 				} else {
-					const segments = tokenizeCurlyInterpolation(value, {
-						attributeMode: true,
-					})
+					const segments = tokenizeCurlyInterpolation(value)
 					for (const seg of segments) {
 						if (seg.kind === 'interpolation') {
 							const contentStart = absValueStart + seg.start + 1
@@ -133,9 +131,7 @@ export function collectTemplateReferences(
 		}
 	}
 
-	const contentSegments = tokenizeCurlyInterpolation(maskedText, {
-		attributeMode: true,
-	})
+	const contentSegments = tokenizeCurlyInterpolation(maskedText)
 	for (const seg of contentSegments) {
 		if (seg.kind === 'interpolation') {
 			const contentStart = seg.start + 1
