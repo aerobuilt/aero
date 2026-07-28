@@ -21,13 +21,13 @@
 			<hr />
 		</header>
 
-		<main data-example="{ { foo: 1 } }">
+		<main data-example="{{foo: 1}}">
 			<header>
 				<h2>Interpolation</h2>
 				<p>
-					<code>{ '{ expr }' }</code> for JS expressions (auto-escaped), <code>raw()</code> for raw
+					<code>{'{ expr }'}</code> for JS expressions (auto-escaped), <code>raw()</code> for raw
 					HTML, and string expressions (or entities) for literal braces. Adjacent
-					<code>{ `{{ ... }}` }</code> is nested JS (e.g. objects).
+					<code>{`{{ ... }}`}</code> is nested JS (e.g. objects).
 				</p>
 			</header>
 
@@ -35,23 +35,23 @@
 				<dl class="grid gap-4 text-sm not-prose">
 					<div class="grid md:grid-cols-2 gap-4">
 						<dt>
-							<code-component code="{ `{ escapedHTML }` }" />
+							<code-component code="{`{ escapedHTML }`}" />
 						</dt>
-						<dd class="card">{ escapedHTML }</dd>
+						<dd class="card">{escapedHTML}</dd>
 					</div>
 
 					<div class="grid md:grid-cols-2 gap-4">
 						<dt>
-							<code-component code="{ `{ raw(trustedHTML) }` }" />
+							<code-component code="{`{ raw(trustedHTML) }`}" />
 						</dt>
-						<dd class="card">{ raw(trustedHTML) }</dd>
+						<dd class="card">{raw(trustedHTML)}</dd>
 					</div>
 
 					<div class="grid md:grid-cols-2 gap-4">
 						<dt>
-							<code-component code="{ `{ literalBraces }` }" />
+							<code-component code="{`{ literalBraces }`}" />
 						</dt>
-						<dd class="card">{ `{ literalBraces }` }</dd>
+						<dd class="card">{`{ literalBraces }`}</dd>
 					</div>
 				</dl>
 			</section>
@@ -63,7 +63,7 @@
 				</header>
 
 				<ul class="card not-prose">
-					<li for="{ const item of items }">{ item }</li>
+					<li for="{const item of items}">{item}</li>
 				</ul>
 			</section>
 
@@ -71,14 +71,14 @@
 				<header>
 					<h2>Build-time <code>if</code> / <code>else-if</code> / <code>else</code></h2>
 					<p>
-						With <code>count = { count }</code> at build, <code>if="{ count > 0 }"</code> chooses
-						the matching branch.
+						With <code>count = {count}</code> at build, <code>if="{count > 0}"</code> chooses the
+						matching branch.
 					</p>
 				</header>
 
 				<div class="card not-prose">
-					<p if="{ count > 0 }">Count > than zero</p>
-					<p else-if="{ count < 0 }">Count < than zero</p>
+					<p if="{count > 0}">Count > than zero</p>
+					<p else-if="{count < 0}">Count < than zero</p>
 					<p else>Count = zero</p>
 				</div>
 			</section>
@@ -86,10 +86,10 @@
 			<section>
 				<header>
 					<h2>Build-time <code>switch</code> / <code>case</code> / <code>default</code></h2>
-					<p><code>status = { status }</code> (fixed at build)</p>
+					<p><code>status = {status}</code> (fixed at build)</p>
 				</header>
 
-				<div switch="{ status }" class="card not-prose">
+				<div switch="{status}" class="card not-prose">
 					<p case="loading">Loading branch</p>
 					<p case="error">Error branch</p>
 					<p default>Ready branch</p>

@@ -19,7 +19,7 @@
 			"contentName": "meta.embedded.expression.aero source.ts",
 			"patterns": [
 				{
-					"comment": "Handle object literals that start with { so nested braces are parsed correctly",
+					"comment": "Object literal body: consume nested braces so outer Aero end is the matching }; inner braces stay TS",
 					"begin": "\\G\\s*(?=\\{)",
 					"end": "(?<=\\})",
 					"patterns": [{ "include": "source.ts#object-literal" }]

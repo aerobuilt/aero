@@ -1,3 +1,4 @@
 {
-	"recommendations": ["aero-js.aero-vscode", "esbenp.prettier-vscode"]
+	"recommendations": ["aero-js.aero-vscode", "esbenp.prettier-vscode"],
+	"unwantedRecommendations": ["Vue.volar"]
 }
