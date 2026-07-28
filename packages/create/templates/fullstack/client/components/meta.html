@@ -1,19 +1,23 @@
 <script is:build>
 	import site from '@content/site.ts'
-	const { title, description, image } = Aero.props
-	const defaultImage = Aero.site.url + site.meta.ogImage
+	const {
+		title = site.meta.title,
+		description = site.meta.description,
+		favicon = site.meta.icon.svg,
+		image = Aero.site.url + site.meta.ogImage,
+	} = Aero.props
 </script>
 
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 
-<title>{ title || site.meta.title }</title>
-<meta name="title" content="{ title || site.meta.title }" />
-<meta name="description" content="{ description || site.meta.description }" />
-<link rel="icon" type="image/svg+xml" href="{ site.meta.icon.svg }" />
+<title>{ title }</title>
+<meta name="title" content="{ title }" />
+<meta name="description" content="{ description }" />
+<link rel="icon" type="image/svg+xml" href="{ favicon }" />
 <link rel="canonical" href="{ Aero.site.url }" />
 
 <meta property="og:type" content="website" />
-<meta property="og:title" content="{ title || site.meta.title }" />
-<meta property="og:description" content="{ description || site.meta.description }" />
-<meta property="og:image" content="{ image || defaultImage }" />
+<meta property="og:title" content="{ title }" />
+<meta property="og:description" content="{ description }" />
+<meta property="og:image" content="{ image }" />

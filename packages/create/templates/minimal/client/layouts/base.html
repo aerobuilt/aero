@@ -1,11 +1,12 @@
 <script is:build>
 	import meta from '@components/meta.html'
 	import footer from '@components/footer.html'
+	const props = Aero.props
 </script>
 
 <html lang="en">
 	<head>
-		<meta-component props="{ ...Aero.props }" />
+		<meta-component props />
 		<link rel="stylesheet" href="@styles/global.css" />
 		<script type="module">
 			import aero from '@aero-js/core'
