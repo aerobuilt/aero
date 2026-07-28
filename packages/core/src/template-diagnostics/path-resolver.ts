@@ -3,6 +3,7 @@
  */
 import * as path from 'node:path'
 import * as fs from 'node:fs'
+import { createRequire } from 'node:module'
 import {
 	loadTsconfigAliases,
 	mergeWithDefaultAliases,
@@ -38,8 +39,19 @@ export interface PathResolver {
 const resolverCache = new Map<string, PathResolver>()
 
 function resolveAeroContentTypes(projectRoot: string): string | undefined {
-	const candidate = path.join(projectRoot, 'node_modules', '@aero-js/core', 'env.d.ts')
-	return isExistingFile(candidate) ? candidate : undefined
+	const requireFromProject = createRequire(path.join(projectRoot, 'package.json'))
+	try {
+		const corePkg = requireFromProject.resolve('@aero-js/core/package.json')
+		const resolved = createRequire(corePkg).resolve('@aero-js/compiler/env')
+		return isExistingFile(resolved) ? resolved : undefined
+	} catch {
+		try {
+			const resolved = requireFromProject.resolve('@aero-js/compiler/env')
+			return isExistingFile(resolved) ? resolved : undefined
+		} catch {
+			return undefined
+		}
+	}
 }
 
 export function getResolver(filePath: string, workspaceRoot?: string): PathResolver {

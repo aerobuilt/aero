@@ -5,7 +5,7 @@
  * Used by definition, hover, and completion providers to decide what to resolve or suggest. classifyPosition runs the detection pipeline (imports, assets, component tags, expression identifiers).
  */
 import * as vscode from 'vscode'
-import { analyzeBuildScriptForEditor } from '@aero-js/core/editor'
+import { analyzeBuildScriptForEditor } from '@aero-js/compiler/build-script-analysis'
 import { COMPONENT_SUFFIX_REGEX, CONTENT_GLOBALS } from './constants'
 import { type Node, parseAeroHtmlDocument } from '@aero-js/html-parser'
 import { parseScriptBlocks } from './script-tag'
@@ -48,7 +48,7 @@ export function classifyPosition(
 	document: vscode.TextDocument,
 	position: vscode.Position
 ): PositionKind | null {
-	// 1. Check for import path or imported name (AST-based via core/editor)
+	// 1. Check for import path or imported name (AST-based via compiler)
 	const importResult = getImportAt(document, position)
 	if (importResult) return importResult
 
@@ -67,7 +67,7 @@ export function classifyPosition(
 }
 
 // ---------------------------------------------------------------------------
-// Import path / imported name detection (AST-based via core/editor)
+// Import path / imported name detection (AST-based via compiler)
 // ---------------------------------------------------------------------------
 
 function getImportAt(

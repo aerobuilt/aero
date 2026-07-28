@@ -4,4 +4,4 @@ export const CONTENT_GLOBALS: Record<string, string> = {
 	theme: '@content/theme.ts',
 }
 
-export { COMPONENT_SUFFIX_REGEX } from '../entry-editor'
+export { COMPONENT_SUFFIX_REGEX } from '@aero-js/compiler/constants'

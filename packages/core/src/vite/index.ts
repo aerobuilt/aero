@@ -22,7 +22,7 @@ import { createAeroSsrPlugin } from './aero-ssr-plugin'
 import { createAeroStaticBuildPlugin } from './aero-static-build-plugin'
 import { resolveAeroNitroPluginsForVite } from './nitro-config'
 import { normalizeAeroOptions, resolveContentOptions } from './resolve-aero-options'
-import { aeroContent } from '@aero-js/content/vite'
+import { loadAeroContentPlugin } from './load-aero-content'
 import type { AeroPluginState } from './plugin-state'
 
 export type { CompileWarningPayload } from './compile-warning-dedup'
@@ -39,10 +39,13 @@ export { flushCompileWarnings } from './compile-warning-dedup'
  */
 export function aero(rawOptions: AeroOptions = {}): PluginOption[] {
 	const contentOptions = resolveContentOptions(rawOptions.content)
+	const aeroContent = contentOptions !== undefined ? loadAeroContentPlugin() : undefined
 	const options = normalizeAeroOptions(rawOptions)
 	const staticServerPlugins = [
 		...(options.staticServerPlugins ?? []),
-		...(contentOptions !== undefined ? [aeroContent(contentOptions)] : []),
+		...(aeroContent !== undefined && contentOptions !== undefined
+			? [aeroContent(contentOptions)]
+			: []),
 	]
 	const pluginOptions: Omit<AeroOptions, 'content'> = {
 		...options,
@@ -160,7 +163,7 @@ export function aero(rawOptions: AeroOptions = {}): PluginOption[] {
 		}
 	}
 
-	if (contentOptions !== undefined) {
+	if (aeroContent !== undefined && contentOptions !== undefined) {
 		plugins.push(aeroContent(contentOptions))
 	}
 

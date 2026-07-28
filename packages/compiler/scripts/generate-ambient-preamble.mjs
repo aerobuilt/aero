@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Generate ambient preamble from @aero-js/core/env.d.ts.
+ * Generate ambient preamble from packages/compiler/env.d.ts.
  *
  * Single source of truth: env.d.ts. Strips comments and splits into
  * BUILD_SCRIPT_PREAMBLE (Aero, renderComponent, raw) and AMBIENT_DECLARATIONS
@@ -12,7 +12,7 @@ import * as path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const envPath = path.resolve(__dirname, '../../core/env.d.ts')
+const envPath = path.resolve(__dirname, '../env.d.ts')
 const outPath = path.resolve(__dirname, '../src/generated/ambient-preamble.ts')
 
 const raw = fs.readFileSync(envPath, 'utf-8')
@@ -44,7 +44,7 @@ if (!fs.existsSync(outDir)) {
 }
 
 const content = `/**
- * Generated from @aero-js/core/env.d.ts - do not edit manually.
+ * Generated from packages/compiler/env.d.ts - do not edit manually.
  * Run: node scripts/generate-ambient-preamble.mjs
  */
 

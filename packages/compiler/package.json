@@ -11,7 +11,8 @@
 		"directory": "packages/compiler"
 	},
 	"files": [
-		"dist"
+		"dist",
+		"env.d.ts"
 	],
 	"type": "module",
 	"main": "./dist/index.mjs",
@@ -108,7 +109,8 @@
 		"./ambient-preamble": {
 			"types": "./dist/generated/ambient-preamble.d.mts",
 			"default": "./dist/generated/ambient-preamble.mjs"
-		}
+		},
+		"./env": "./env.d.ts"
 	},
 	"scripts": {
 		"prebuild": "node scripts/generate-ambient-preamble.mjs",

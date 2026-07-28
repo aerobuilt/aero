@@ -74,6 +74,6 @@ In VS Code settings, search for **Aero**:
 - Entry: `src/extension.ts`
 - Build: `pnpm run build` (tsup, CJS, `dist/`)
 - Test: `pnpm test` (Vitest)
-- **Dependencies:** `@aero-js/core/editor`, `@aero-js/html-parser`, `@aero-js/interpolation`, and **`@aero-js/diagnostics`** (`ide-catalog` only for doc URLs; no Effect in the client bundle beyond what core/editor already pulls). Only the `vscode` module is external; the build bundles workspace deps into `dist/`.
+- **Dependencies:** `@aero-js/compiler`, `@aero-js/core/template-diagnostics`, `@aero-js/html-parser`, `@aero-js/interpolation`, and **`@aero-js/diagnostics`** (`ide-catalog` only for doc URLs). Only the `vscode` module is external; the build bundles workspace deps into `dist/`.
 - **Publishing:** From the repo root, run `pnpm run vscode:package` to build and produce the `.vsix`. Or from the extension directory: `pnpm install`, `pnpm run build`, then `vsce package --no-dependencies`. Use `--no-dependencies` so vsce skips `npm list` (which fails in pnpm workspaces). The extension bundles deps into `dist/`; the `.vsix` contains only that and assets.
 - **Release smoke:** follow [`RELEASE-SMOKE.md`](./RELEASE-SMOKE.md) before publishing to validate editor behavior and diagnostics parity (including `AERO_ROUTE`).

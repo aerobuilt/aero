@@ -4,7 +4,6 @@
  * @remarks
  * Grouped roughly by: config/dirs, compile/parse, resolver/aliases, routing, render context.
  */
-import type { AeroContentOptions } from '@aero-js/content/vite'
 
 export interface AeroDirs {
 	/** Site source directory; pages live at `client/pages` (default: `'client'`). */
@@ -13,6 +12,12 @@ export interface AeroDirs {
 	server?: string
 	/** Build output directory (default: `'dist'`). */
 	dist?: string
+}
+
+/** Options for the optional `@aero-js/content` Vite plugin when `content` is enabled. */
+export interface AeroContentOptions {
+	/** Path to content config file relative to project root (default: `content.config.ts`). */
+	config?: string
 }
 
 /** One redirect rule: from path to URL, optional status (default 302). */
