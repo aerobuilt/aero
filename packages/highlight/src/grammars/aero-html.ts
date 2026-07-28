@@ -2,21 +2,27 @@ import type { LanguageInput } from 'shiki'
 
 /**
  * Injection pattern for `{ ... }` expressions in HTML attribute strings.
- * Highlights the inner content as TypeScript (e.g. `props="{ title: site.title }"`).
+ * Outer braces use Aero delimiter scopes; expression-body object braces stay TypeScript.
  */
 const aeroExpressionPattern = {
-	begin: '\\{',
-	end: '\\}',
+	name: 'meta.embedded.block.expression.aero',
+	begin: '(\\{)',
+	end: '(\\})',
 	beginCaptures: {
-		'0': { name: 'punctuation.section.embedded.begin.aero' },
+		'1': {
+			name: 'punctuation.section.embedded.begin.aero punctuation.definition.string.begin.html',
+		},
 	},
 	endCaptures: {
-		'0': { name: 'punctuation.section.embedded.end.aero' },
+		'1': {
+			name: 'punctuation.section.embedded.end.aero punctuation.definition.string.end.html',
+		},
 	},
 	contentName: 'meta.embedded.expression.aero source.ts',
 	patterns: [
 		{
-			comment: 'Handle object literals that start with { so nested braces are parsed correctly',
+			comment:
+				'Object literal body: consume nested braces so outer Aero end is the matching }; inner braces stay TS',
 			begin: '\\G\\s*(?=\\{)',
 			end: '(?<=\\})',
 			patterns: [{ include: 'source.ts#object-literal' }],

@@ -16,7 +16,7 @@
 			"options": {
 				"parser": "aero",
 				"aeroAttributePrefix": "none",
-				"aeroBracketSpacing": true,
+				"aeroBracketSpacing": false,
 				"aeroSelfClosingComponents": true
 			}
 		}

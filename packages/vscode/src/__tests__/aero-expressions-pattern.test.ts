@@ -17,6 +17,7 @@ describe('aero-expressions grammar', () => {
 		patterns: Array<{
 			name?: string
 			contentName?: string
+			begin?: string
 			beginCaptures?: Record<string, { name?: string }>
 			endCaptures?: Record<string, { name?: string }>
 		}>
@@ -109,21 +110,59 @@ describe.skipIf(!existsSync(htmlGrammarPath))('aero-expressions tokenization', (
 		expectOuterAeroBraces(line, tokens)
 	})
 
-	it('scopes outer braces of { { foo: 1 } } like single-brace interpolations', async () => {
-		const line = `<div data-example="{ { foo: 1 } }"></div>`
+	it('scopes outer braces of object interpolations like { expr }; inner stay TS', async () => {
+		for (const line of [
+			`<div data-example="{ { foo: 1 } }"></div>`,
+			`<div data-example="{{foo: 1}}"></div>`,
+			`<div data-example="{{ foo: 1 }}"></div>`,
+		]) {
+			const tokens = await tokenize(line)
+			expectOuterAeroBraces(line, tokens)
+			const innerOpen = line.indexOf('{', line.indexOf('{') + 1)
+			const innerClose = line.lastIndexOf('}', line.lastIndexOf('}') - 1)
+			expect(
+				scopesAt(line, innerOpen, tokens).some(s =>
+					s.includes('punctuation.definition.block.ts')
+				)
+			).toBe(true)
+			expect(
+				scopesAt(line, innerClose, tokens).some(s =>
+					s.includes('punctuation.definition.block.ts')
+				)
+			).toBe(true)
+			expect(
+				scopesAt(line, innerOpen, tokens).some(s =>
+					s.includes('punctuation.section.embedded.begin.aero')
+				)
+			).toBe(false)
+			const outerOpen = line.indexOf('{')
+			expect(
+				scopesAt(line, outerOpen, tokens).some(s =>
+					s.includes('punctuation.definition.string.begin.html')
+				)
+			).toBe(true)
+			expect(
+				scopesAt(line, outerOpen, tokens).some(s =>
+					s.includes('punctuation.definition.block.ts')
+				)
+			).toBe(false)
+		}
+	})
+
+	it('keeps call-arg braces as TS block punctuation', async () => {
+		const line = `<div title="{ getVal({ x: 1 }) }"></div>`
 		const tokens = await tokenize(line)
 		expectOuterAeroBraces(line, tokens)
 		const innerOpen = line.indexOf('{', line.indexOf('{') + 1)
 		expect(
 			scopesAt(line, innerOpen, tokens).some(s =>
+				s.includes('punctuation.definition.block.ts')
+			)
+		).toBe(true)
+		expect(
+			scopesAt(line, innerOpen, tokens).some(s =>
 				s.includes('punctuation.section.embedded.begin.aero')
 			)
 		).toBe(false)
-	})
-
-	it('scopes outer braces of {{ foo: 1 }} like single-brace interpolations', async () => {
-		const line = `<div data-example="{{ foo: 1 }}"></div>`
-		const tokens = await tokenize(line)
-		expectOuterAeroBraces(line, tokens)
 	})
 })
